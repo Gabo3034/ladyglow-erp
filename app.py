@@ -786,8 +786,8 @@ elif st.session_state['rol'] == 'admin':
                         elif 'comision_num' in df_c.columns and pd.notna(row.get('comision_num')) and row.get('comision_num', 0) > 0:
                             df_c.at[idx, 'beneficiario_real'] = empleado_actual_titulo
 
-                    df_c['beneficiario_real'] = df_c['beneficiario_real'].astype(str).apply(
-                        lambda x: re.split(r'[\r\n]+', x)[0].strip()
+                    df_c['beneficiario_real'] = df_c['beneficiario_real'].apply(
+                        lambda x: re.split(r'[\r\n]+', str(x))[0].strip() if x is not None and str(x) not in ('None', 'nan', '') else None
                     )
 
                     # Borrar datos existentes del período y reinsertar
