@@ -253,14 +253,51 @@ LISTA_EMPLEADAS = [
 # =====================================================================
 @st.cache_resource
 def get_engine():
-    """Conecta a PostgreSQL con pool de conexiones y reconexión automática."""
-    return create_engine(
-        st.secrets["DATABASE_URL"],
-        pool_pre_ping=True,
-        pool_recycle=300,
-        pool_size=5,
-        max_overflow=3
-    )
+    """
+    Conecta a PostgreSQL usando psycopg3 (compatible con Python 3.12+).
+    Supabase recomienda el puerto 6543 (Transaction Pooler) para apps web.
+    """
+    if "DATABASE_URL" not in st.secrets:
+        st.error("❌ Falta la variable DATABASE_URL en los Secrets de Streamlit.")
+        st.info("Ve a **Manage app → Secrets** y agrega tu URL de Supabase.")
+        st.stop()
+
+    raw_url = st.secrets["DATABASE_URL"]
+
+    # Normalizar prefijo para psycopg3 con SQLAlchemy
+    if raw_url.startswith("postgres://"):
+        raw_url = raw_url.replace("postgres://", "postgresql+psycopg://", 1)
+    elif raw_url.startswith("postgresql://") and "+psycopg" not in raw_url:
+        raw_url = raw_url.replace("postgresql://", "postgresql+psycopg://", 1)
+
+    try:
+        eng = create_engine(
+            raw_url,
+            pool_pre_ping=True,
+            pool_recycle=300,
+            pool_size=5,
+            max_overflow=3,
+            connect_args={"sslmode": "require"},
+        )
+        # Verificar que la conexión funciona al arrancar
+        with eng.connect() as test_conn:
+            test_conn.execute(text("SELECT 1"))
+        return eng
+    except Exception as e:
+        st.error("❌ No se pudo conectar a la base de datos.")
+        st.markdown("""
+**Verifica lo siguiente en los Secrets de Streamlit:**
+
+1. La URL debe ser la del **Transaction Pooler** (puerto **6543**):
+```
+DATABASE_URL = "postgresql://postgres.XXXX:[PASSWORD]@aws-0-sa-east-1.pooler.supabase.com:6543/postgres"
+```
+2. En Supabase: **Project Settings → Database → Connection Pooling → Transaction Mode → Connection String**.
+3. Reemplaza `[YOUR-PASSWORD]` con tu contraseña real.
+        """)
+        st.code(str(e), language="text")
+        st.stop()
+
 
 engine = get_engine()
 
