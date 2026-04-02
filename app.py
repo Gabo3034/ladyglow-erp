@@ -813,9 +813,14 @@ elif st.session_state['rol'] == 'admin':
                     df_v_limpio = alinear_columnas(df_v, 'db_facturacion', engine)
                     df_c_limpio = alinear_columnas(df_c, 'db_comisiones', engine)
 
-                    # Inserción por lotes (chunksize=500) para no saturar Supabase
-                    df_v_limpio.to_sql('db_facturacion', engine, if_exists='append', index=False, chunksize=500)
-                    df_c_limpio.to_sql('db_comisiones', engine, if_exists='append', index=False, chunksize=500)
+                    # 1. PURGA ABSOLUTA DE NULOS (NaN, NaT, NA) -> None (El único que Postgres acepta)
+                    df_v_limpio = df_v_limpio.where(pd.notna(df_v_limpio), None)
+                    df_c_limpio = df_c_limpio.where(pd.notna(df_c_limpio), None)
+
+                    # 2. INSERCIÓN OPTIMIZADA PARA POOLER (method='multi' es la magia aquí)
+                    # Bajamos el chunksize a 100 para no exceder el límite de parámetros de Postgres
+                    df_v_limpio.to_sql('db_facturacion', engine, if_exists='append', index=False, chunksize=100, method='multi')
+                    df_c_limpio.to_sql('db_comisiones', engine, if_exists='append', index=False, chunksize=100, method='multi')
                     
                     st.success("✅ Datos procesados, alineados y guardados correctamente.")
 
