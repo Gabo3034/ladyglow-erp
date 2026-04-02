@@ -12,7 +12,7 @@ st.set_page_config(page_title="LadyGlow ERP", layout="wide", page_icon="✦")
 # =====================================================================
 # 🎨 TEMA VISUAL — ROSE GOLD · MAUVE · CREAM
 # =====================================================================
-st.markdown("""
+st.html("""
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Nunito:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -228,7 +228,7 @@ hr { border-color: var(--border) !important; margin: 1.5rem 0 !important; }
 [data-testid="stSlider"] > div > div > div { background: var(--rose) !important; }
 [data-testid="stSlider"] [role="slider"] { background: var(--rose-dark) !important; border-color: var(--rose) !important; }
 </style>
-""", unsafe_allow_html=True)
+""")
 
 
 # =====================================================================
